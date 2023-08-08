@@ -1,0 +1,162 @@
+<template>
+    <div class="play">
+        <div class="header">
+            <div class="title">
+                <!-- <router-link to="/">
+                    <i class="iconfont icon-shouye left"></i>
+                </router-link> -->
+                <span class="iconfont left" @click="$router.back()">&lt;</span>
+                <div class="music-info">
+                    <div>{{ $route.params.name }}</div>
+                    <div class="author">{{ $route.params.author}}</div>
+                </div>
+                <router-link to="/search">
+                    <i class="iconfont icon-sousuo right"></i>
+                </router-link>
+            </div>
+        </div>
+        <div class="song-info">
+            <div class="song-info-img">
+                <img :src="getUrl()" alt />
+            </div>
+            <div class="iconbox">
+                <i class="iconfont icon-shoucang2 left" :class="{ca:red}" @click="red = !red"></i>
+                <i class="box"></i>
+                <i class="iconfont icon-xiazai right"></i>
+            </div>
+        </div>
+        <div class="song">
+            <LRC :id="$route.params.id" :currentTime="currentTime"/>
+            <audio ref="player" controls autoplay :src="playerData.url"></audio>
+        </div>
+    </div>
+</template>
+
+<script>
+    import LRC from './LRC.vue'
+    export default{
+        name: 'Player',
+        components: {LRC},
+        data(){
+            return {
+                playerData:{},  
+                currentTime:0,
+                red: false,
+            }
+        },
+        mounted(){
+            this.$api.getPlayer({
+                id: this.$route.params.id,
+                name: this.$route.params.name,
+                author: this.$route.params.author,
+                image: this.$route.params.image
+            }).then(res => {
+                console.log(res.data[0].url)
+                this.playerData = res.data[0];
+                this.addEventHandle()
+            })
+        },
+        beforeDestroy(){
+            this.removeEventHandle()
+        },//在组件销毁前解绑监听事件
+        methods:{
+            getUrl(){
+                return decodeURIComponent(this.$route.params.image)//url解码
+            },
+            /**获取音乐时长: audio 的属性
+             * 1.获取音乐总时长：duration
+             * 2.获取音乐正在播放的时间节点: currentTime
+             */
+            addEventHandle(){
+                this.$refs.player.addEventListener('timeupdate', this.currentTimeHandle)
+            },
+            removeEventHandle(){
+                this.$refs.player.removeEventListener('timeupdate', this.currentTimeHandle)
+            },
+            currentTimeHandle(){
+                this.currentTime = this.$refs.player.currentTime
+            }
+        }
+    }
+</script>
+
+<style lang="less" scoped>
+.header {
+    padding: 15px;
+}
+
+.music-info {
+    flex: 1;
+    font-size: 20px;
+}
+
+.title {
+    display: flex;
+    text-align: center;
+}
+
+.left {
+    font-size: 30px;
+}
+
+.ca {
+    color: red;
+}
+
+.right {
+    font-size: 30px;
+}
+
+.song-info {
+    padding: 15px;
+}
+
+.song-info-img {
+    text-align: center;
+}
+
+.song-info-img img {
+    width: 50%;
+    border-radius: 5px;
+    box-shadow: 0 0 10px 0 rgba(50, 50, 50, 0.31);
+}
+
+.song-lrc {
+    margin-top: 10px;
+    min-height: 50px;
+}
+
+.iconbox {
+    display: flex;
+    margin-top: 30px;
+}
+
+.iconbox .box {
+    flex: 1;
+}
+
+.song {
+    width: 100%;
+    text-align: center;
+}
+
+.song audio {
+    width: 80%;
+}
+
+.active {
+    color: #222;
+}
+
+.author {
+    font-size: 12px;
+    color: #999;
+}
+
+::-webkit-scrollbar{
+    background-color: #f1f0f0;
+}
+::-webkit-scrollbar-thumb {
+    background-color: #999;
+}
+</style>
